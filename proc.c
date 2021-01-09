@@ -500,7 +500,7 @@ kill(int pid)
 // Print a process listing to console.  For debugging.
 // Runs when user types ^P on console.
 // No lock to avoid wedging a stuck machine further.
-void
+void 
 procdump(void)
 {
   static char *states[] = {
@@ -511,11 +511,11 @@ procdump(void)
   [RUNNING]   "run   ",
   [ZOMBIE]    "zombie"
   };
-  int i;
+  int i, j, verificador;
   struct proc *p;
   char *state;
   uint pc[10];
-
+ 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->state == UNUSED)
       continue;
@@ -523,12 +523,44 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("%d %s %s", p->pid, state, p->name);
+    cprintf("PID = %d state = %s name = %s\n", p->pid, state, p->name);
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)
-        cprintf(" %p", pc[i]);
+        cprintf(" %p", pc[i]);  
     }
     cprintf("\n");
+    cprintf("Page Tables:\n");
+    cprintf("memory location of page directory %x\n", p->pgdir);
+
+    for(i=0; i<NPDENTRIES; i++){
+     	if((p->pgdir[i] & PTE_P) && (p->pgdir[i] & PTE_U)){
+      		pte_t *pageTabVir = P2V((pte_t*)PTE_ADDR(p->pgdir[i]));
+      		verificador = 0;
+      		for(j=0; j<NPTENTRIES; j++){
+      			if((pageTabVir[j] & PTE_P) && (pageTabVir[j] & PTE_U)){
+      				verificador++;
+      			}
+      		}
+      		if(verificador > 0){
+            cprintf("    pdir PTE %d, %p:\n", i+1,(pte_t*)(PTE_ADDR(p->pgdir[i]) >> 12));
+            cprintf("     memory location of page table %p\n", PTE_ADDR((P2V((pte_t*)PTE_ADDR(p->pgdir[i])))));
+            for(j = 0; j < NPDENTRIES; j++){
+              if((pageTabVir[j] & PTE_P) && (pageTabVir[j] & PTE_U)){
+      			    cprintf("            ptb1 PTE %p,",j+1);
+      			    cprintf("            %p,", (PTE_ADDR(pageTabVir[j]) >> 12));
+      			    cprintf("            %p\n", PTE_ADDR(pageTabVir[j]));
+              }
+            }
+            cprintf("Page Mappings:\n");
+     			  cprintf("%p ->  %p\n", (PTE_ADDR(P2V(PTE_ADDR(p->pgdir[i])))) >> 12, ((int)PTE_ADDR(p->pgdir[i]) >> 12));
+      		}
+    	}
+     
+    }
+    cprintf("\n");
+    cprintf("\n");
+
   }
+
 }
