@@ -91,9 +91,14 @@ trap(struct trapframe *tf)
             "eip 0x%x addr 0x%x--kill proc\n",
             myproc()->pid, myproc()->name, tf->trapno,
             tf->err, cpuid(), tf->eip, rcr2());
+  
+    if(tf->trapno == 14 && rcr2() == 0){
+      cprintf("tentativa de acesso a um endereco errado\n");
+    }
     myproc()->killed = 1;
   }
-
+  //printando mensagem de erro para endereço zero
+  
   // Force process exit if it has been killed and is in user space.
   // (If it is still executing in the kernel, let it keep running
   // until it gets to the regular system call return.)
