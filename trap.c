@@ -92,12 +92,13 @@ trap(struct trapframe *tf)
             myproc()->pid, myproc()->name, tf->trapno,
             tf->err, cpuid(), tf->eip, rcr2());
   
+  //printando mensagem de erro para endereço zero
     if(tf->trapno == 14 && rcr2() == 0){
       cprintf("tentativa de acesso a um endereco errado\n");
+      cprintf("tentativa de acesso ao endereco 0\n");
     }
     myproc()->killed = 1;
   }
-  //printando mensagem de erro para endereço zero
   
   // Force process exit if it has been killed and is in user space.
   // (If it is still executing in the kernel, let it keep running

@@ -7,6 +7,11 @@
 #include "mmu.h"
 #include "proc.h"
 
+//task4
+int sys_cowfork(){
+  return cowfork();
+}
+
 int
 sys_fork(void)
 {

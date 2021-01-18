@@ -6,6 +6,11 @@
 #include "mmu.h"
 #include "proc.h"
 #include "elf.h"
+#include "spinlock.h"
+
+#define MAXIMOCOMP PHYSTOP >> 12 // Maximo de memoria para a tabela
+static int tabelaCompartilhada[MAXIMOCOMP]; // tabela compartilhada
+struct spinlock bloqueio;
 
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
@@ -390,10 +395,55 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
   return 0;
 }
 
-//PAGEBREAK!
-// Blank page.
-//PAGEBREAK!
-// Blank page.
-//PAGEBREAK!
-// Blank page.
+/*------------------------------------task 4-----------------------------------------------------*/
+void inicializador_Tabela(void)
+{
+  initlock(&bloqueio, "tabelaCompartilhada");
+  int i;
 
+  acquire(&bloqueio);
+  for(i=0; i< MAXIMOCOMP; i++){
+    tabelaCompartilhada[i]=0;
+  }
+  release(&bloqueio);
+
+}
+
+
+pde_t*
+shareuvm(pde_t *pgdir, uint sz)
+{
+  pde_t *d;
+  pte_t *pte;
+  uint pa, i, flags;
+  struct  proc *curproc = myproc();
+
+  if((d = setupkvm()) == 0)
+    return 0;
+  acquire(&bloqueio);
+  for(i = PGSIZE; i < sz; i += PGSIZE){
+    if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
+      panic("copyuvm: pte should exist");
+    if(!(*pte & PTE_P))
+      panic("copyuvm: page not present");
+    *pte |= PTE_C; 
+    *pte &= ~PTE_W;
+    pa = PTE_ADDR(*pte);
+    flags = PTE_FLAGS(*pte);
+    if(mappages(d, (void*)i, PGSIZE, pa, flags) < 0)
+      goto bad;
+    if(tabelaCompartilhada[(pa >> 12) & 0xFFFFF] !=  0){
+        tabelaCompartilhada[(pa >> 12) & 0xFFFFF]++;
+    } else{
+        tabelaCompartilhada[(pa >> 12) & 0xFFFFF]++;
+        tabelaCompartilhada[(pa >> 12) & 0xFFFFF]++;
+    }
+  }
+  release(&bloqueio);
+  lcr3(V2P(curproc->pgdir));
+  return d;
+
+  bad:
+    freevm(d);
+    return 0;
+}

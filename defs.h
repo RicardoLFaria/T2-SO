@@ -106,6 +106,8 @@ int             pipewrite(struct pipe*, char*, int);
 int             cpuid(void);
 void            exit(void);
 int             fork(void);
+//task4
+int             cowfork(void);
 int             growproc(int);
 int             kill(int);
 struct cpu*     mycpu(void);
@@ -181,6 +183,10 @@ void            freevm(pde_t*);
 void            inituvm(pde_t*, char*, uint);
 int             loaduvm(pde_t*, char*, struct inode*, uint, uint, uint); // task 3
 pde_t*          copyuvm(pde_t*, uint);
+//task4
+pde_t*          shareuvm(pde_t*, uint);
+int             cowfork(void);
+void            inicializador_Tabela(void);
 void            switchuvm(struct proc*);
 void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);

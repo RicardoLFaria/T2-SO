@@ -105,6 +105,7 @@ extern int sys_write(void);
 extern int sys_uptime(void);
 extern int sys_mycall(void);
 extern int sys_date(void);
+extern int sys_cowfork(void); //task 4
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -129,7 +130,8 @@ static int (*syscalls[])(void) = {
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
 [SYS_mycall]  sys_mycall,
-[SYS_date]    sys_date
+[SYS_date]    sys_date,
+[SYS_cowfork] sys_cowfork //task 4
 };
 
 void
